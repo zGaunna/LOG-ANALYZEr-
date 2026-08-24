@@ -1,0 +1,9 @@
+{"timestamp": "2024-01-01 10:00:01", "level": "ERROR", "message": "Failed to connect to database"}
+{"timestamp": "2024-01-01 10:00:02", "level": "WARNING", "message": "High memory usage detected"}
+{"timestamp": "2024-01-01 10:00:03", "level": "INFO", "message": "Retrying connection"}
+{"timestamp": "2024-01-01 10:00:04", "level": "ERROR", "message": "Failed to connect to database"}
+{"timestamp": "2024-01-01 10:00:05", "level": "ERROR", "message": "Timeout on query"}
+{"timestamp": "2024-01-01 10:00:06", "level": "INFO", "message": "Connection restored"}
+{"timestamp": "2024-01-01 10:00:07", "level": "WARNING", "message": "Disk space low"}
+{"timestamp": "2024-01-01 10:00:08", "level": "ERROR", "message": "Failed to connect to database"}
+{"timestamp": "2024-01-01 10:00:09", "level": "INFO", "message": "Backup completed"}
