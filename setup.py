@@ -13,7 +13,7 @@ setup(
     description='A Python script that analyzes log files to count total lines, ERROR and WARNING lines, and list error/warning messages',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/selim/log-analyzer',
+    url='https://github.com/zGaunna/LOG-ANALYZEr-.git',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     classifiers=[
