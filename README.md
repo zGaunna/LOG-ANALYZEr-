@@ -72,6 +72,7 @@ log-analyzer /path/to/logs --advanced --format table
 ## Example Output
 
 ### Default Format
+
 ```
 Log dosyası: C:\path\to\analyzer_20260824_204322.log
 İşlenen dosya sayısı: 1
@@ -89,6 +90,7 @@ ERROR ve WARNING mesajları:
 ```
 
 ### Table Format (`--format table`)
+
 ```
 ============================================================
 TABLO FORMATLI ÇIKTI
@@ -108,6 +110,7 @@ TIMESTAMP           LEVEL   MESSAGE                                    FILE:LINE
 ```
 
 ### Advanced Analysis (`--advanced`)
+
 ```
 ============================================================
 GELİŞMİŞ ANALİZ SONUÇLARI
