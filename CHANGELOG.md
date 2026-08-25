@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2026-08-26
 ### Added
 - Advanced analysis features (time series, pattern detection, anomaly detection, correlation analysis)
 - Table format output with SQL-like display
@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - Enhanced console output to properly display Turkish characters
 - Used shared parsing function in table formatter and advanced analysis
 
-## [1.0.0] - 2026-08-26
+## [1.0.0] - 2026-08-24
 ### Added
 - Initial release of Log Analyzer with CSV, JSON, and plain text log support
 - ERROR/WARNING counting and message listing
@@ -31,3 +31,5 @@ All notable changes to this project will be documented in this file.
 - GUI folder selection (tkinter)
 - Log file output with timestamp
 - Command line interface with help and version information
+
+## [Unreleased]

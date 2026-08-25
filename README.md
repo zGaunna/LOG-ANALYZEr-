@@ -1,6 +1,6 @@
 # Log Analyzer
 
-A Python script that analyzes log files (.log, .txt, .json, .jsonl, .csv) to count total lines, ERROR and WARNING lines, and list error/warning messages with file and line numbers.
+A Python package that analyzes log files (.log, .txt, .json, .jsonl, .csv) to count total lines, ERROR and WARNING lines, and list error/warning messages with file and line numbers.
 
 ## Features
 
@@ -25,10 +25,24 @@ A Python script that analyzes log files (.log, .txt, .json, .jsonl, .csv) to cou
   - SQL-like table display: TIMESTAMP | LEVEL | MESSAGE | FILE:LINE
   - Proper column alignment and truncation for readability
 
-## Usage
+## Installation
 
 ```bash
-python analyzer.py <directory_to_analyze>
+pip install .
+```
+
+## Usage
+
+After installation, use the command:
+
+```bash
+log-analyzer <directory_to_analyze>
+```
+
+Alternatively, you can run it directly with Python:
+
+```bash
+python -m log_analyzer <directory_to_analyze>
 ```
 
 If no argument is provided, a folder selection dialog will appear (if tkinter is available).
@@ -43,19 +57,16 @@ If no argument is provided, a folder selection dialog will appear (if tkinter is
 
 ```bash
 # Basic analysis
-python analyzer.py /path/to/logs
+log-analyzer /path/to/logs
 
 # With advanced analysis
-python analyzer.py /path/to/logs --advanced
+log-analyzer /path/to/logs --advanced
 
 # With table format output
-python analyzer.py /path/to/logs --format table
+log-analyzer /path/to/logs --format table
 
 # Both advanced analysis and table format
-python analyzer.py /path/to/logs --advanced --format table
-
-# Using the installed command (after pip install .)
-log-analyzer /path/to/logs
+log-analyzer /path/to/logs --advanced --format table
 ```
 
 ## Example Output

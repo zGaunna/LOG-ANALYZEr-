@@ -10,7 +10,7 @@ import csv
 # Maximum number of detailed ERROR/WARNING messages to display
 MAX_DETAILED_MESSAGES = 1000
 # Version of the log analyzer
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 
 def extract_message_level(obj):
