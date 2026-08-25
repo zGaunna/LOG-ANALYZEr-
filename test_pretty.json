@@ -1,0 +1,4 @@
+[
+  {"message": "ERROR: pretty1", "level": "ERROR"},
+  {"message": "WARNING: pretty2", "level": "WARNING"}
+]

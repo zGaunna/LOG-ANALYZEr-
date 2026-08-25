@@ -1,0 +1,3 @@
+# Log Analyzer Requirements
+# This project uses only Python standard library modules
+# No external dependencies required

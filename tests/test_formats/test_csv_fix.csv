@@ -1,0 +1,9 @@
+2024-01-01,ERROR,Failed to connect to database,level of severity high
+2024-01-01,WARNING,High memory usage detected,message queue full
+2024-01-01,INFO,Retrying connection,level normal
+2024-01-01,ERROR,Failed to connect to database,level critical
+2024-01-01,ERROR,Timeout on query,message delayed
+2024-01-01,INFO,Connection restored,level restored
+2024-01-01,WARNING,Disk space low,message cleanup needed
+2024-01-01,ERROR,Failed to connect to database,level fatal
+2024-01-01,INFO,Backup completed,level normal

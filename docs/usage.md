@@ -1,66 +1,70 @@
-# Log Analyzer
+# Usage Guide
 
-A Python script that analyzes log files (.log, .txt, .json, .jsonl, .csv) to count total lines, ERROR and WARNING lines, and list error/warning messages with file and line numbers.
+## Command Line Interface
 
-## Features
-
-- Parses plain text logs (.log, .txt)
-- Parses JSON logs (JSON Lines or JSON array) extracting message and level fields
-- Parses CSV logs with headers, extracting message and level columns
-- Recursively walks directories
-- Outputs summary: files processed, total lines, ERROR/WARNING count
-- Lists ERROR and WARNING messages with file:line context
-- Limits detailed output to 1000 messages to avoid flooding console
-- Saves its own output to a timestamped log file in the script directory
-- Double-click friendly: if no directory argument provided, opens a folder selection dialog (tkinter)
-- Waits for user input before closing when launched by double-click
-- Uses only Python standard library (no external dependencies)
-- **Advanced analysis features** (with `--advanced` flag):
-  - Time series analysis (hourly/daily ERROR/WARNING trends)
-  - Error pattern analysis (word frequency, message similarity grouping)
-  - Anomaly detection (statistical outlier detection in log volumes)
-  - Correlation analysis (WARNING→ERROR within time windows)
-  - Summary statistics (percentages, time span, message length, etc.)
-- **Table format output** (with `--format table`):
-  - SQL-like table display: TIMESTAMP | LEVEL | MESSAGE | FILE:LINE
-  - Proper column alignment and truncation for readability
-
-## Usage
+The log analyzer can be run directly with Python:
 
 ```bash
 python analyzer.py <directory_to_analyze>
 ```
 
-If no argument is provided, a folder selection dialog will appear (if tkinter is available).
+Or, after installation, via the command:
+
+```bash
+log-analyzer <directory_to_analyze>
+```
+
+### Arguments
+
+- `directory` (optional): Path to the directory containing log files to analyze.
+  If not provided, a folder selection dialog will appear (if tkinter is available).
 
 ### Options
 
-- `--advanced`: Enable advanced analysis features
-- `--format {default,table}`: Output format (default: default)
-- `--version`: Show program's version number and exit
+- `--advanced`: Enable advanced analysis features (time series, pattern detection, etc.)
+- `--format {default,table}`: Specify ilin format. 
+  - `default`: Standard console output
+  - `table`: SQL-like table format
+- `--version`: Show the program's version and exit.
 
-### Examples
+## Examples
+
+### Basic Usage
+
+Analyze a directory for ERROR and WARNING messages:
 
 ```bash
-# Basic analysis
-python analyzer.py /path/to/logs
-
-# With advanced analysis
-python analyzer.py /path/to/logs --advanced
-
-# With table format output
-python analyzer.py /path/to/logs --format table
-
-# Both advanced analysis and table format
-python analyzer.py /path/to/logs --advanced --format table
-
-# Using the installed command (after pip install .)
-log-analyzer /path/to/logs
+python analyzer.py /var/log/myapp
 ```
 
-## Example Output
+### Advanced Analysis
 
-### Default Format
+Enable time series, pattern detection, and other advanced features:
+
+```bash
+python analyzer.py /var/log/myapp --advanced
+```
+
+### Table Format Output
+
+Get output in a formatted table for easier reading:
+
+```bash
+python analyzer.py /var/log/myapp --format table
+```
+
+### Combined Options
+
+Use both advanced analysis and table format:
+
+```bash
+python analyzer.py /var/log/myapp --advanced --format table
+```
+
+## Output Formats
+
+### Default Output
+
 ```
 Log dosyası: C:\path\to\analyzer_20260824_204322.log
 İşlenen dosya sayısı: 1
@@ -78,6 +82,7 @@ ERROR ve WARNING mesajları:
 ```
 
 ### Table Format (`--format table`)
+
 ```
 ============================================================
 TABLO FORMATLI ÇIKTI
@@ -97,6 +102,9 @@ TIMESTAMP           LEVEL   MESSAGE                                    FILE:LINE
 ```
 
 ### Advanced Analysis (`--advanced`)
+
+When combined with either format, advanced analysis provides additional insights:
+
 ```
 ============================================================
 GELİŞMİŞ ANALİZ SONUÇLARI
@@ -130,11 +138,18 @@ Korelasyon Analizi:
   Saat başına mesaj: 400.00
 ```
 
+## Supported Log Formats
+
+- Plain text: `.log`, `.txt`
+- JSON: `.json`, `.jsonl` (JSON Lines)
+- CSV: `.csv` (with automatic header detection)
+
 ## Requirements
 
-- Python 3.x (tested with 3.12)
-- Standard library only: os, sys, collections, datetime, json, csv, tkinter (optional for GUI)
+- Python 3.7 or higher
+- Only Python standard library modules are used (no external dependencies)
+- Tkinter is optional for the GUI folder selection dialog
 
 ## License
 
-MIT
+MIT License - see the LICENSE file for details.

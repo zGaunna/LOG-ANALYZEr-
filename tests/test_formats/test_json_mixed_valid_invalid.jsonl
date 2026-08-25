@@ -1,0 +1,6 @@
+{"timestamp": "2024-01-01 10:00:01", "level": "ERROR", "message": "First valid line"}
+{"timestamp": "2024-01-01 10:00:02", "level": "WARNING", "message": "Second valid line"}
+INVALID JSON LINE THAT SHOULD BE SKIPPED
+{"timestamp": "2024-01-01 10:00:03", "level": "ERROR", "message": "Third valid line after invalid"}
+{"timestamp": "2024-01-01 10:00:04", "level": "INFO", "message": "Fourth valid line"}
+{"timestamp": "2024-01-01 10:00:05", "level": "ERROR", "message": "Fifth valid line"}

@@ -1,0 +1,9 @@
+2024-01-01 10:00:01,ERROR,Failed to connect to database
+2024-01-01 10:00:02,WARNING,High memory usage detected
+2024-01-01 10:00:03,INFO,Retrying connection
+2024-01-01 10:00:04,ERROR,Failed to connect to database
+2024-01-01 10:00:05,ERROR,Timeout on query
+2024-01-01 10:00:06,INFO,Connection restored
+2024-01-01 10:00:07,WARNING,Disk space low
+2024-01-01 10:00:08,ERROR,Failed to connect to database
+2024-01-01 10:00:09,INFO,Backup completed
