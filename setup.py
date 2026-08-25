@@ -9,7 +9,7 @@ with open(os.path.join(current_dir, 'README.md'), encoding='utf-8') as f:
 setup(
     name='log-analyzer',
     version='1.1.0',
-    author='selim',
+    author='Log Analyzer Team',
     description='A Python script that analyzes log files to count total lines, ERROR and WARNING lines, and list error/warning messages',
     long_description=long_description,
     long_description_content_type='text/markdown',
