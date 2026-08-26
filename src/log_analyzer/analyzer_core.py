@@ -126,10 +126,35 @@ def analyze_file(filepath, log_and_print):
 
     try:
         if ext in ['.log', '.txt']:
-            # Plain text files - line by line
+            # Plain text files - handle multiline log events (stack traces, etc)
             with open(filepath, 'r', encoding='utf-8') as f:
                 lines_with_nums = [(line_num, line.rstrip('\n')) for line_num, line in enumerate(f, start=1)]
-                error_messages = detect_errors_warnings(lines_with_nums)
+                # Group lines into log events: a new event starts when a line contains a timestamp and known level
+                events = []  # list of (line_num, message) where message may be multi-line
+                current_lines = []
+                current_start = None
+                for line_num, line_content in lines_with_nums:
+                    ts, lvl, _ = parse_log_message(line_content)
+                    is_new_event = lvl in ['ERROR', 'WARNING', 'INFO', 'DEBUG', 'FATAL', 'TRACE'] and ts != 'Unknown'
+                    if is_new_event:
+                        if current_lines:
+                            # Finalize previous event
+                            event_msg = '\n'.join(current_lines)
+                            events.append((current_start, event_msg))
+                            current_lines = [line_content]
+                            current_start = line_num
+                        else:
+                            # First event
+                            current_lines = [line_content]
+                            current_start = line_num
+                    else:
+                        # Continuation line (stack trace, etc)
+                        current_lines.append(line_content)
+                # After loop, flush any remaining event
+                if current_lines:
+                    event_msg = '\n'.join(current_lines)
+                    events.append((current_start, event_msg))
+                error_messages = detect_errors_warnings(events)
                 total_lines = len(lines_with_nums)
                 error_warning_lines = len(error_messages)
 
