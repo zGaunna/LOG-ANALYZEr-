@@ -33,3 +33,6 @@ All notable changes to this project will be documented in this file.
 - Command line interface with help and version information
 
 ## [Unreleased]
+
+### Fixed
+- Korelasyon analizi: analyze_correlations fonksiyonu artık her WARNING için zaman damgasına göre sıralı error_times listesini kullanarak, en yakın (minimum pozitif zaman farkı) ERROR'u bulur. Bu, çoklu dosya işleme veya dosyalar kronolojik olmayan sırada işlenirse daha doğru korelasyon sonuçları sağlar.
