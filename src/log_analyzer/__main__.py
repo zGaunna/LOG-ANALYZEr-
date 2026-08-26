@@ -58,6 +58,9 @@ Examples:
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     log_file_path = os.path.join(script_dir, f"analyzer_{timestamp}.log")
 
+    # Remove stale analyzer logs before creating a new one.
+    analyzer_core.cleanup_old_logs(keep_count=5)
+
     # Open log file
     log_file = None
     try:
@@ -101,37 +104,29 @@ Examples:
 
         # Output based on format choice
         if args.format == 'table':
-            # For table format, we use the table formatter
             log_and_print("\n" + "="*60)
             log_and_print("TABLO FORMATLI ÇIKTI")
             log_and_print("="*60)
-
             table_output = output_formatter.format_table_output(all_error_messages)
             log_and_print(table_output)
         elif args.format == 'json':
-            # JSON format
             log_and_print("\n" + "="*60)
             log_and_print("JSON FORMATLI ÇIKTI")
             log_and_print("="*60)
             json_output = output_formatter.format_json_output(all_error_messages)
             log_and_print(json_output)
         elif args.format == 'jsonl':
-            # JSONL format
             log_and_print("\n" + "="*60)
             log_and_print("JSONL FORMATLI ÇIKTI")
             log_and_print("="*60)
             jsonl_output = output_formatter.format_jsonl_output(all_error_messages)
             log_and_print(jsonl_output)
         elif args.format == 'html':
-            # HTML format
             log_and_print("\n" + "="*60)
             log_and_print("HTML FORMATLI ÇIKTI")
             log_and_print("="*60)
             html_output = output_formatter.format_html_output(all_error_messages)
             log_and_print(html_output)
-        else:
-            # Default format - already printed by analyze_logs
-            pass
 
         # Advanced analysis if requested
         if args.advanced and all_error_messages:
@@ -139,7 +134,6 @@ Examples:
             log_and_print("GELİŞMİŞ ANALİZ SONUÇLARI")
             log_and_print("="*60)
 
-            # Parse messages for advanced analysis: LogEvent objects
             events_for_advanced = []
             for filepath, line_num, message in all_error_messages:
                 timestamp, level, content = analyzer_core.parse_log_message(message)
@@ -151,13 +145,11 @@ Examples:
                     message=message
                 ))
 
-            # Time series analysis
             time_series = advanced_analyzer.analyze_time_series(events_for_advanced)
             log_and_print("Zaman Serisi Analizi:")
             log_and_print(f"  Yoğun saat: {time_series['peak_hour']} (ERROR: {time_series['peak_hour_count']['ERROR']}, WARNING: {time_series['peak_hour_count']['WARNING']})")
             log_and_print(f"  Yoğun gün: {time_series['peak_day']} (ERROR: {time_series['peak_day_count']['ERROR']}, WARNING: {time_series['peak_day_count']['WARNING']})")
 
-            # Error pattern analysis
             error_patterns = advanced_analyzer.analyze_error_patterns(events_for_advanced)
             log_and_print("\nHata Pattern Analizi:")
             log_and_print(f"  Toplam ERROR: {error_patterns['total_errors']}")
@@ -167,16 +159,14 @@ Examples:
             if error_patterns['top_words']:
                 log_and_print(f"  En sık kullanılan kelimeler: {', '.join(list(error_patterns['top_words'].keys())[:5])}")
 
-            # Anomaly detection
             anomalies = advanced_analyzer.detect_anomalies(events_for_advanced)
             log_and_print("\nAnomali Algılama:")
             if anomalies['anomalies']:
-                for anomaly in anomalies['anomalies'][:3]:  # Show top 3
+                for anomaly in anomalies['anomalies'][:3]:
                     log_and_print(f"  {anomaly['hour']}: {anomaly['count']} mesaj (z-score: {anomaly['z_score']}, {anomaly['type']})")
             else:
                 log_and_print("  Anomali tespit edilmedi.")
 
-            # Correlation analysis
             correlations = advanced_analyzer.analyze_correlations(events_for_advanced)
             log_and_print("\nKorelasyon Analizi:")
             log_and_print(f"  WARNING → ERROR korelasyonu (5 dakika içinde): {correlations['warning_to_error_correlations']} örnek")
@@ -185,7 +175,6 @@ Examples:
                 for example in correlations['correlation_examples'][:3]:
                     log_and_print(f"    WARNING: {example['warning_time']} → ERROR: {example['error_time']} ({example['time_diff_seconds']} saniye)")
 
-            # Summary statistics
             stats = advanced_analyzer.generate_summary_statistics(events_for_advanced)
             log_and_print("\nÖzet İstatistikler:")
             log_and_print(f"  Toplam mesaj: {stats['total_messages']}")
@@ -197,19 +186,16 @@ Examples:
             if stats['messages_per_hour']:
                 log_and_print(f"  Saat başına mesaj: {stats['messages_per_hour']}")
 
-            # Cause chain detection
             try:
                 chains = advanced_analyzer.detect_cause_chain(events_for_advanced)
             except AttributeError:
-                # Function not yet implemented
                 chains = []
             if chains:
                 log_and_print("\nKöklü Olay Zincirleri (muhtemel kök → rezultat):")
-                for idx, chain_info in enumerate(chains[:3], start=1):  # Show up to 3
+                for idx, chain_info in enumerate(chains[:3], start=1):
                     root = chain_info['root']
                     chain = chain_info['chain']
                     log_and_print(f"  {idx}. Kök: [{root.filepath}:{root.line_number}] {root.timestamp} {root.level} {root.message[:100]}{'...' if len(root.message) > 100 else ''}")
-                    # Print the chain steps
                     step_str = " → ".join([f"{ev.level}" for ev in chain])
                     log_and_print(f"     Zincir: {step_str}")
                     for ev in chain:
@@ -217,19 +203,16 @@ Examples:
             else:
                 log_and_print("\nKöklü Olay Zincirleri: Tespit edilmedi.")
 
-            # TIMELINE VISUALIZATION
             log_and_print("\n" + "="*60)
             log_and_print("ZAMAN ÇİZELGESİ GÖRSELLEŞTİRMESİ")
             log_and_print("="*60)
-            # Hourly timeline
             hourly_timeline = timeline.format_timeline(
                 time_series.get('hourly', {}),
                 time_series.get('daily', {}),
                 granularity='hourly'
             )
             log_and_print(hourly_timeline)
-            log_and_print("")  # Empty line for readability
-            # Daily timeline
+            log_and_print("")
             daily_timeline = timeline.format_timeline(
                 time_series.get('hourly', {}),
                 time_series.get('daily', {}),
@@ -237,8 +220,6 @@ Examples:
             )
             log_and_print(daily_timeline)
 
-            # DASHBOARD INTEGRATION
-            # Prepare results dictionary for dashboard
             results = {
                 'total_files': files_processed,
                 'total_lines': total_lines,
@@ -247,7 +228,7 @@ Examples:
                 'hourly_counts': time_series.get('hourly', {}),
                 'daily_counts': time_series.get('daily', {}),
                 'top_words': error_patterns.get('top_words', {}),
-                'common_error_patterns': [],  # Placeholder for future implementation
+                'common_error_patterns': error_patterns.get('common_error_patterns', []),
                 'anomalies': anomalies.get('anomalies', []),
                 'correlations': correlations.get('correlation_examples', []),
                 'cause_chains': chains,
@@ -260,7 +241,6 @@ Examples:
                 'peak_day_count': time_series['peak_day_count']
             }
 
-            # Generate and print dashboard
             dashboard_output = dashboard.generate_dashboard(results)
             log_and_print("\n" + "="*60)
             log_and_print("İSTATİSTİKSEL DASHBOARD")
