@@ -201,8 +201,8 @@ def analyze_file(filepath, log_and_print):
                     for line_num, line in enumerate(f, start=1):
                         line = line.rstrip('\n')
                         total_lines += 1
-                        upper_line = line.upper()
-                        if 'ERROR' in upper_line or 'WARNING' in upper_line:
+                        timestamp, level, msg_content = parse_log_message(line)
+                        if level in ['ERROR', 'WARNING']:
                             error_warning_lines += 1
                             error_messages.append((line_num, line))
             except Exception as e:
@@ -273,7 +273,7 @@ def analyze_logs(directory, log_and_print):
     else:
         log_and_print("ERROR veya WARNING mesajı bulunamadı.")
 
-    return total_lines, error_warning_lines, all_error_messages
+    return total_lines, error_warning_lines, all_error_messages, files_processed
 
 
 def parse_log_message(message: str) -> tuple:
@@ -292,6 +292,23 @@ def parse_log_message(message: str) -> tuple:
     level = "Unknown"
     msg_content = message
 
+    # 1. Try specific combined formats: ISO 8601, Syslog-like, Python logging
+    patterns = [
+        # ISO 8601: 2024-01-15T10:30:00 ERROR Message or 2024-01-15 10:30:00 ERROR Message
+        (r'^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)\s+(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION)\s+(.*)$', 1, 2, 3),
+        # Syslog-like: Jan 15 10:30:00 hostname ERROR: Message
+        (r'^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+\S+\s+(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION):\s+(.*)$', 1, 2, 3),
+        # Python logging: 2024-01-15 10:30:00,123 ERROR Message
+        (r'^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2},\d{3})\s+(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION)\s+(.*)$', 1, 2, 3),
+    ]
+    for pat, ts_grp, lvl_grp, msg_grp in patterns:
+        m = re.match(pat, message)
+        if m:
+            timestamp = m.group(ts_grp)
+            level = m.group(lvl_grp).upper()
+            msg_content = m.group(msg_grp).strip()
+            return timestamp, level, msg_content
+
     # Helper to try to extract timestamp from the start of a string
     def extract_timestamp(s: str):
         m = re.match(r'(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)\s+(.*)', s)
@@ -308,34 +325,34 @@ def parse_log_message(message: str) -> tuple:
 
     # Now try to extract level from the remaining string (after timestamp if any)
     # Try colon-separated level: LEVEL: message
-    m = re.match(r'^(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE):\s*(.*)$', remaining, re.IGNORECASE)
+    m = re.match(r'^(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION):\s*(.*)$', remaining, re.IGNORECASE)
     if m:
         level = m.group(1).upper()
         msg_content = m.group(2).strip()
         return timestamp, level, msg_content
 
     # Try bracket format: [LEVEL] message
-    m = re.match(r'^\[(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE)\]\s*(.*)$', remaining, re.IGNORECASE)
+    m = re.match(r'^\[(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION)\]\s*(.*)$', remaining, re.IGNORECASE)
     if m:
         level = m.group(1).upper()
         msg_content = m.group(2).strip()
         return timestamp, level, msg_content
 
     # Try level as first word: LEVEL message
-    m = re.match(r'^(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE)\s+(.*)$', remaining, re.IGNORECASE)
+    m = re.match(r'^(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION)\s+(.*)$', remaining, re.IGNORECASE)
     if m:
         level = m.group(1).upper()
         msg_content = m.group(2).strip()
         return timestamp, level, msg_content
 
     # Try key-value level=VALUE anywhere in the string (case-insensitive)
-    m = re.search(r'[ _-]level[ _-]*=[ _-]*(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE)[ _-]', remaining, re.IGNORECASE)
+    m = re.search(r'level[ _-]*=[ _-]*(ERROR|WARNING|INFO|DEBUG|FATAL|TRACE|EXCEPTION)', remaining, re.IGNORECASE)
     if m:
         level = m.group(1).upper()
-        # Remove the key-value pair from the message for cleaner content
-        # We'll remove the matched substring
-        start, end = m.span()
-        msg_content = (remaining[:start] + remaining[end:]).strip()
+        # Remove the matched substring
+        msg_content = (remaining[:m.start()] + remaining[m.end():]).strip()
+        # Collapse multiple spaces that may have arisen from the removal
+        msg_content = re.sub(r'\s+', ' ', msg_content)
         return timestamp, level, msg_content
 
     # If we reach here, we could not confidently determine the level.
