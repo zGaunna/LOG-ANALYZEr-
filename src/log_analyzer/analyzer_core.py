@@ -254,7 +254,7 @@ def parse_log_message(message: str) -> tuple:
     level = "Unknown"
     msg_content = message
 
-    # Check if message already has level: message format
+    # Check if message already has level: message format (contains ': ')
     if ': ' in message and message.count(': ') >= 1:
         parts = message.split(': ', 1)
         potential_level = parts[0].strip()
@@ -269,7 +269,7 @@ def parse_log_message(message: str) -> tuple:
                     timestamp = f"{date_part} {time_part}"
                     msg_content = ' '.join(msg_content.split(' ')[2:]) if len(msg_content.split(' ')) > 2 else ""
         else:
-            # Try to find timestamp at start
+            # Try to find timestamp at start for messages with ': ' but non-standard level
             timestamp_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', message)
             if timestamp_match:
                 timestamp = timestamp_match.group(1)
@@ -280,6 +280,18 @@ def parse_log_message(message: str) -> tuple:
                     msg_content = msg_part
                 else:
                     msg_content = remaining
+
+    # Try to find timestamp at start for messages without ': ' (standard format: "TIMESTAMP LEVEL message")
+    timestamp_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', message)
+    if timestamp_match:
+        timestamp = timestamp_match.group(1)
+        remaining = message[timestamp_match.end():].strip()
+        if remaining.startswith('ERROR ') or remaining.startswith('WARNING ') or remaining.startswith('INFO ') or remaining.startswith('DEBUG '):
+            level_part, msg_part = remaining.split(' ', 1)
+            level = level_part
+            msg_content = msg_part
+        else:
+            msg_content = remaining
 
     return timestamp, level, msg_content
 

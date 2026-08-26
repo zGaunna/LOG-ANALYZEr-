@@ -126,13 +126,13 @@ Examples:
                 parsed_for_advanced.append((timestamp, level, message))
 
             # Time series analysis
-            time_series = analyzer_core.analyze_time_series(parsed_for_advanced)
+            time_series = advanced_analyzer.analyze_time_series(parsed_for_advanced)
             log_and_print("Zaman Serisi Analizi:")
             log_and_print(f"  Yoğun saat: {time_series['peak_hour']} (ERROR: {time_series['peak_hour_count']['ERROR']}, WARNING: {time_series['peak_hour_count']['WARNING']})")
             log_and_print(f"  Yoğun gün: {time_series['peak_day']} (ERROR: {time_series['peak_day_count']['ERROR']}, WARNING: {time_series['peak_day_count']['WARNING']})")
 
             # Error pattern analysis
-            error_patterns = analyzer_core.analyze_error_patterns(parsed_for_advanced)
+            error_patterns = advanced_analyzer.analyze_error_patterns(parsed_for_advanced)
             log_and_print("\nHata Pattern Analizi:")
             log_and_print(f"  Toplam ERROR: {error_patterns['total_errors']}")
             log_and_print(f"  Toplam WARNING: {error_patterns['total_warnings']}")
@@ -142,7 +142,7 @@ Examples:
                 log_and_print(f"  En sık kullanılan kelimeler: {', '.join(list(error_patterns['top_words'].keys())[:5])}")
 
             # Anomaly detection
-            anomalies = analyzer_core.detect_anomalies(parsed_for_advanced)
+            anomalies = advanced_analyzer.detect_anomalies(parsed_for_advanced)
             log_and_print("\nAnomali Algılama:")
             if anomalies['anomalies']:
                 for anomaly in anomalies['anomalies'][:3]:  # Show top 3
@@ -151,7 +151,7 @@ Examples:
                 log_and_print("  Anomali tespit edilmedi.")
 
             # Correlation analysis
-            correlations = analyzer_core.analyze_correlations(parsed_for_advanced)
+            correlations = advanced_analyzer.analyze_correlations(parsed_for_advanced)
             log_and_print("\nKorelasyon Analizi:")
             log_and_print(f"  WARNING → ERROR korelasyonu (5 dakika içinde): {correlations['warning_to_error_correlations']} örnek")
             if correlations['correlation_examples']:
@@ -160,7 +160,7 @@ Examples:
                     log_and_print(f"    WARNING: {example['warning_time']} → ERROR: {example['error_time']} ({example['time_diff_seconds']} saniye)")
 
             # Summary statistics
-            stats = analyzer_core.generate_summary_statistics(parsed_for_advanced)
+            stats = advanced_analyzer.generate_summary_statistics(parsed_for_advanced)
             log_and_print("\nÖzet İstatistikler:")
             log_and_print(f"  Toplam mesaj: {stats['total_messages']}")
             log_and_print(f"  ERROR oranı: {stats['error_percentage']}%")
