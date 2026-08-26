@@ -6,11 +6,23 @@ import collections
 import datetime
 import json
 import csv
+from dataclasses import dataclass
+from typing import Optional, List, Tuple, Any
 
 # Maximum number of detailed ERROR/WARNING messages to display
 MAX_DETAILED_MESSAGES = 1000
 # Version of the log analyzer
 __version__ = "1.1.0"
+
+
+@dataclass
+class LogEvent:
+    """Structured representation of a single log event."""
+    filepath: str
+    line_number: int
+    timestamp: Optional[str]  # ISO-like string or None if not parseable
+    level: str               # ERROR, WARNING, INFO, DEBUG, FATAL, TRACE, or Unknown
+    message: str             # The log message content (may be multi-line for stack traces)
 
 
 def extract_message_level(obj):

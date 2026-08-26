@@ -5,13 +5,14 @@ import collections
 import datetime
 import json
 from typing import List, Tuple, Dict, Any, Optional
+from .analyzer_core import LogEvent
 
 
-def analyze_time_series(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
+def analyze_time_series(events: List[LogEvent]) -> Dict[str, Any]:
     """Analyze ERROR/WARNING messages over time.
 
     Args:
-        messages: List of (timestamp, level, message) tuples
+        events: List of LogEvent objects
 
     Returns:
         Dictionary with time series analysis results
@@ -20,17 +21,19 @@ def analyze_time_series(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
     hourly_counts = collections.defaultdict(lambda: {'ERROR': 0, 'WARNING': 0})
     daily_counts = collections.defaultdict(lambda: {'ERROR': 0, 'WARNING': 0})
 
-    for timestamp_str, level, message in messages:
+    for event in events:
+        if event.level not in ['ERROR', 'WARNING']:
+            continue
         try:
             # Try to parse timestamp
-            dt = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+            dt = datetime.datetime.strptime(event.timestamp, '%Y-%m-%d %H:%M:%S')
             hour_key = dt.strftime('%Y-%m-%d %H:00')
             day_key = dt.strftime('%Y-%m-%d')
 
-            hourly_counts[hour_key][level] += 1
-            daily_counts[day_key][level] += 1
-        except ValueError:
-            # Skip if timestamp format doesn't match
+            hourly_counts[hour_key][event.level] += 1
+            daily_counts[day_key][event.level] += 1
+        except (ValueError, TypeError):
+            # Skip if timestamp format doesn't match or is None
             continue
 
     # Find peak hours
@@ -52,18 +55,18 @@ def analyze_time_series(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
     }
 
 
-def analyze_error_patterns(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
+def analyze_error_patterns(events: List[LogEvent]) -> Dict[str, Any]:
     """Analyze patterns in error messages.
 
     Args:
-        messages: List of (timestamp, level, message) tuples
+        events: List of LogEvent objects
 
     Returns:
         Dictionary with error pattern analysis
     """
     # Extract just the messages for analysis
-    error_messages = [msg for _, level, msg in messages if level == 'ERROR']
-    warning_messages = [msg for _, level, msg in messages if level == 'WARNING']
+    error_messages = [event.message for event in events if event.level == 'ERROR']
+    warning_messages = [event.message for event in events if event.level == 'WARNING']
 
     # Count word frequencies in error messages
     word_freq = collections.Counter()
@@ -103,11 +106,11 @@ def analyze_error_patterns(messages: List[Tuple[int, str, str]]) -> Dict[str, An
     }
 
 
-def detect_anomalies(messages: List[Tuple[int, str, str]], threshold: float = 2.0) -> Dict[str, Any]:
+def detect_anomalies(events: List[LogEvent], threshold: float = 2.0) -> Dict[str, Any]:
     """Detect anomalous log volumes using statistical methods.
 
     Args:
-        messages: List of (timestamp, level, message) tuples
+        events: List of LogEvent objects
         threshold: Number of standard deviations for anomaly detection
 
     Returns:
@@ -116,12 +119,14 @@ def detect_anomalies(messages: List[Tuple[int, str, str]], threshold: float = 2.
     # Group by hour for time series
     hourly_total = collections.defaultdict(int)
 
-    for timestamp_str, level, message in messages:
+    for event in events:
+        if event.level not in ['ERROR', 'WARNING']:
+            continue
         try:
-            dt = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+            dt = datetime.datetime.strptime(event.timestamp, '%Y-%m-%d %H:%M:%S')
             hour_key = dt.strftime('%Y-%m-%d %H:00')
             hourly_total[hour_key] += 1
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
     if len(hourly_total) < 2:
@@ -157,31 +162,33 @@ def detect_anomalies(messages: List[Tuple[int, str, str]], threshold: float = 2.
     }
 
 
-def analyze_correlations(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
+def analyze_correlations(events: List[LogEvent]) -> Dict[str, Any]:
     """Analyze correlations between events and errors.
 
     Args:
-        messages: List of (timestamp, level, message) tuples
+        events: List of LogEvent objects
 
     Returns:
         Dictionary with correlation analysis
     """
-    # Simple correlation: look for WARNINGs followed by ERRORs within time windows
+    # Look for WARNINGs followed by ERRORs within 5 minutes (directed correlation)
     error_times = []
     warning_times = []
 
-    for timestamp_str, level, message in messages:
+    for event in events:
+        if event.level not in ['ERROR', 'WARNING']:
+            continue
         try:
-            dt = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-            if level == 'ERROR':
+            dt = datetime.datetime.strptime(event.timestamp, '%Y-%m-%d %H:%M:%S')
+            if event.level == 'ERROR':
                 error_times.append(dt)
-            elif level == 'WARNING':
+            elif event.level == 'WARNING':
                 warning_times.append(dt)
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
     correlations = []
-    # For each warning, see if there's an error within 5 minutes
+    # For each warning, find the first ERROR that occurs after it within 5 minutes
     for warning_time in warning_times:
         for error_time in error_times:
             time_diff = (error_time - warning_time).total_seconds()
@@ -191,7 +198,7 @@ def analyze_correlations(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]
                     'error_time': error_time.strftime('%Y-%m-%d %H:%M:%S'),
                     'time_diff_seconds': int(time_diff)
                 })
-                break  # Count each warning only once
+                break  # Count each warning only once, match with first qualifying ERROR
 
     return {
         'warning_to_error_correlations': len(correlations),
@@ -201,32 +208,33 @@ def analyze_correlations(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]
     }
 
 
-def generate_summary_statistics(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]:
-    """Generate summary statistics from log messages.
+def generate_summary_statistics(events: List[LogEvent]) -> Dict[str, Any]:
+    """Generate summary statistics from log events.
 
     Args:
-        messages: List of (timestamp, level, message) tuples
+        events: List of LogEvent objects
 
     Returns:
         Dictionary with summary statistics
     """
-    if not messages:
+    if not events:
         return {'message': 'No messages to analyze'}
 
     # Basic counts
-    total_messages = len(messages)
-    error_count = sum(1 for _, level, _ in messages if level == 'ERROR')
-    warning_count = sum(1 for _, level, _ in messages if level == 'WARNING')
-    info_count = total_messages - error_count - warning_count
+    total_events = len(events)
+    error_count = sum(1 for e in events if e.level == 'ERROR')
+    warning_count = sum(1 for e in events if e.level == 'WARNING')
+    info_count = total_events - error_count - warning_count
 
     # Time range analysis
     timestamps = []
-    for timestamp_str, _, _ in messages:
-        try:
-            dt = datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-            timestamps.append(dt)
-        except ValueError:
-            continue
+    for event in events:
+        if event.timestamp and event.timestamp != 'Unknown':
+            try:
+                dt = datetime.datetime.strptime(event.timestamp, '%Y-%m-%d %H:%M:%S')
+                timestamps.append(dt)
+            except ValueError:
+                continue
 
     time_span = None
     if timestamps:
@@ -237,17 +245,17 @@ def generate_summary_statistics(messages: List[Tuple[int, str, str]]) -> Dict[st
         }
 
     # Message length statistics
-    msg_lengths = [len(msg) for _, _, msg in messages]
+    msg_lengths = [len(event.message) for event in events]
     avg_msg_length = sum(msg_lengths) / len(msg_lengths) if msg_lengths else 0
 
     return {
-        'total_messages': total_messages,
+        'total_messages': total_events,
         'error_count': error_count,
         'warning_count': warning_count,
         'info_count': info_count,
-        'error_percentage': round((error_count / total_messages) * 100, 2) if total_messages > 0 else 0,
-        'warning_percentage': round((warning_count / total_messages) * 100, 2) if total_messages > 0 else 0,
+        'error_percentage': round((error_count / total_events) * 100, 2) if total_events > 0 else 0,
+        'warning_percentage': round((warning_count / total_events) * 100, 2) if total_events > 0 else 0,
         'time_span': time_span,
         'average_message_length': round(avg_msg_length, 2),
-        'messages_per_hour': round(total_messages / max(1, time_span['duration_hours']) if time_span and time_span['duration_hours'] > 0 else 0, 2)
+        'messages_per_hour': round(total_events / max(1, time_span['duration_hours']) if time_span and time_span['duration_hours'] > 0 else 0, 2)
     }
