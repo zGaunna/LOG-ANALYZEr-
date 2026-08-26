@@ -187,18 +187,35 @@ def analyze_correlations(events: List[LogEvent]) -> Dict[str, Any]:
         except (ValueError, TypeError):
             continue
 
+    # Sort error times chronologically to find closest matches
+    error_times.sort()
+
     correlations = []
-    # For each warning, find the first ERROR that occurs after it within 5 minutes
+    # For each warning, find the closest ERROR that occurs after it within 5 minutes
     for warning_time in warning_times:
+        closest_error_time = None
+        min_time_diff = float('inf')
+
+        # Since error_times is sorted, we can break early when errors exceed window
         for error_time in error_times:
             time_diff = (error_time - warning_time).total_seconds()
-            if 0 < time_diff <= 300:  # ERROR after WARNING, within 5 minutes
-                correlations.append({
-                    'warning_time': warning_time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'error_time': error_time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'time_diff_seconds': int(time_diff)
-                })
-                break  # Count each warning only once, match with first qualifying ERROR
+
+            # ERROR must be after WARNING and within 5 minutes
+            if 0 < time_diff <= 300:
+                if time_diff < min_time_diff:
+                    min_time_diff = time_diff
+                    closest_error_time = error_time
+            # Optimization: since list is sorted, break when errors are too far
+            elif time_diff > 300:
+                break
+
+        # Add correlation if closest ERROR found within window
+        if closest_error_time is not None:
+            correlations.append({
+                'warning_time': warning_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'error_time': closest_error_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'time_diff_seconds': int(min_time_diff)
+            })
 
     return {
         'warning_to_error_correlations': len(correlations),
