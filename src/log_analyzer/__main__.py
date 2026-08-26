@@ -6,9 +6,9 @@ import os
 
 # Try relative import first (when used as module), fall back to absolute (when run directly)
 try:
-    from . import analyzer_core, advanced_analyzer, output_formatter
+    from . import analyzer_core, advanced_analyzer, output_formatter, dashboard, timeline
 except ImportError:
-    from log_analyzer import analyzer_core, advanced_analyzer, output_formatter
+    from log_analyzer import analyzer_core, advanced_analyzer, output_formatter, dashboard, timeline
 
 
 def main():
@@ -97,7 +97,7 @@ Examples:
         log_and_print(f"Log dosyası: {log_file_path}")
 
         # Perform analysis
-        total_lines, error_warning_lines, all_error_messages = analyzer_core.analyze_logs(directory, log_and_print)
+        total_lines, error_warning_lines, all_error_messages, files_processed = analyzer_core.analyze_logs(directory, log_and_print)
 
         # Output based on format choice
         if args.format == 'table':
@@ -175,6 +175,72 @@ Examples:
             log_and_print(f"  Ortalama mesaj uzunluğu: {stats['average_message_length']} karakter")
             if stats['messages_per_hour']:
                 log_and_print(f"  Saat başına mesaj: {stats['messages_per_hour']}")
+
+            # Cause chain detection
+            chains = advanced_analyzer.detect_cause_chain(events_for_advanced)
+            if chains:
+                log_and_print("\nKöklü Olay Zincirleri (muhtemel kök → rezultat):")
+                for idx, chain_info in enumerate(chains[:3], start=1):  # Show up to 3
+                    root = chain_info['root']
+                    chain = chain_info['chain']
+                    log_and_print(f"  {idx}. Kök: [{root.filepath}:{root.line_number}] {root.timestamp} {root.level} {root.message[:100]}{'...' if len(root.message) > 100 else ''}")
+                    # Print the chain steps
+                    step_str = " → ".join([f"{ev.level}" for ev in chain])
+                    log_and_print(f"     Zincir: {step_str}")
+                    for ev in chain:
+                        log_and_print(f"       [{ev.filepath}:{ev.line_number}] {ev.timestamp} {ev.level} {ev.message[:100]}{'...' if len(ev.message) > 100 else ''}")
+            else:
+                log_and_print("\nKöklü Olay Zincirleri: Tespit edilmedi.")
+
+            # TIMELINE VISUALIZATION
+            log_and_print("\n" + "="*60)
+            log_and_print("ZAMAN ÇİZELGESİ GÖRSELLEŞTİRMESİ")
+            log_and_print("="*60)
+            # Hourly timeline
+            hourly_timeline = timeline.format_timeline(
+                time_series.get('hourly', {}),
+                time_series.get('daily', {}),
+                granularity='hourly'
+            )
+            log_and_print(hourly_timeline)
+            log_and_print("")  # Empty line for readability
+            # Daily timeline
+            daily_timeline = timeline.format_timeline(
+                time_series.get('hourly', {}),
+                time_series.get('daily', {}),
+                granularity='daily'
+            )
+            log_and_print(daily_timeline)
+
+            # DASHBOARD INTEGRATION
+            # Prepare results dictionary for dashboard
+            results = {
+                'total_files': files_processed,
+                'total_lines': total_lines,
+                'error_count': error_patterns['total_errors'],
+                'warning_count': error_patterns['total_warnings'],
+                'hourly_counts': time_series.get('hourly', {}),
+                'daily_counts': time_series.get('daily', {}),
+                'top_words': error_patterns.get('top_words', {}),
+                'common_error_patterns': [],  # Placeholder for future implementation
+                'anomalies': anomalies.get('anomalies', []),
+                'correlations': correlations.get('correlation_examples', []),
+                'cause_chains': chains,
+                'time_span': stats.get('time_span'),
+                'average_message_length': stats.get('average_message_length'),
+                'messages_per_hour': stats.get('messages_per_hour'),
+                'peak_hour': time_series['peak_hour'],
+                'peak_hour_count': time_series['peak_hour_count'],
+                'peak_day': time_series['peak_day'],
+                'peak_day_count': time_series['peak_day_count']
+            }
+
+            # Generate and print dashboard
+            dashboard_output = dashboard.generate_dashboard(results)
+            log_and_print("\n" + "="*60)
+            log_and_print("İSTATİSTİKSEL DASHBOARD")
+            log_and_print("="*60)
+            log_and_print(dashboard_output)
 
         log_and_print(f"İşlem tamamlandı. Sonuçlar [{log_file_path}] dosyasına kaydedildi.")
 
