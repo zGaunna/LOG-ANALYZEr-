@@ -198,7 +198,11 @@ Examples:
                 log_and_print(f"  Saat başına mesaj: {stats['messages_per_hour']}")
 
             # Cause chain detection
-            chains = advanced_analyzer.detect_cause_chain(events_for_advanced)
+            try:
+                chains = advanced_analyzer.detect_cause_chain(events_for_advanced)
+            except AttributeError:
+                # Function not yet implemented
+                chains = []
             if chains:
                 log_and_print("\nKöklü Olay Zincirleri (muhtemel kök → rezultat):")
                 for idx, chain_info in enumerate(chains[:3], start=1):  # Show up to 3
