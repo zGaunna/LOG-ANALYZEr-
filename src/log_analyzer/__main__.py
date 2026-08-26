@@ -39,7 +39,7 @@ Examples:
 
     parser.add_argument(
         '--format',
-        choices=['default', 'table'],
+        choices=['default', 'table', 'json', 'jsonl', 'html'],
         default='default',
         help='Output format (default: default)'
     )
@@ -108,6 +108,27 @@ Examples:
 
             table_output = output_formatter.format_table_output(all_error_messages)
             log_and_print(table_output)
+        elif args.format == 'json':
+            # JSON format
+            log_and_print("\n" + "="*60)
+            log_and_print("JSON FORMATLI ÇIKTI")
+            log_and_print("="*60)
+            json_output = output_formatter.format_json_output(all_error_messages)
+            log_and_print(json_output)
+        elif args.format == 'jsonl':
+            # JSONL format
+            log_and_print("\n" + "="*60)
+            log_and_print("JSONL FORMATLI ÇIKTI")
+            log_and_print("="*60)
+            jsonl_output = output_formatter.format_jsonl_output(all_error_messages)
+            log_and_print(jsonl_output)
+        elif args.format == 'html':
+            # HTML format
+            log_and_print("\n" + "="*60)
+            log_and_print("HTML FORMATLI ÇIKTI")
+            log_and_print("="*60)
+            html_output = output_formatter.format_html_output(all_error_messages)
+            log_and_print(html_output)
         else:
             # Default format - already printed by analyze_logs
             pass
