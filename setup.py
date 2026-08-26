@@ -1,16 +1,15 @@
 from setuptools import setup, find_packages
 import os
 
-# Read the contents of README file
 current_dir = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(current_dir, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='log-analyzer',
-    version='1.1.0',
+    version='1.2.0',
     author='Log Analyzer Team',
-    description='A Python script that analyzes log files to count total lines, ERROR and WARNING lines, and list error/warning messages',
+    description='A dependency-free Python tool for analyzing log files and finding ERROR/WARNING events',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/zGaunna/LOG-ANALYZEr-.git',
@@ -30,11 +29,7 @@ setup(
         'Operating System :: OS Independent',
     ],
     python_requires='>=3.7',
-    entry_points={
-        'console_scripts': [
-            'log-analyzer=log_analyzer.__main__:main',
-        ],
-    },
+    entry_points={'console_scripts': ['log-analyzer=log_analyzer.__main__:main']},
     include_package_data=True,
     zip_safe=False,
 )
