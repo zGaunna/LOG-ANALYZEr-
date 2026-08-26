@@ -1,33 +1,38 @@
 # Release Notes
 
-## v1.0.0 (Unreleased)
-### Added
-- Advanced analysis features (time series, pattern detection, anomaly detection, correlation analysis)
-- Table format output with SQL-like display
-- Modular package structure with separate handlers for CSV, JSON, text logs
-- Shared log message parsing function for consistent timestamp/level extraction
-- Proper UTF-8 encoding support for Turkish characters in console and log files
-- Comprehensive test suite structure
-- Permission checking for directory access
-- Log file cleanup mechanism (keeps 5 most recent logs)
+## v1.2.0 - 2026-08-27
 
-### Fixed
-- CSV header detection false positives (now requires exact match of ≥2 log-related columns)
-- JSON Lines parsing early termination (continues processing after invalid lines)
-- Import issues when running as module vs script
-- Duplicate analyzer.py file in src/log_analyzer/
+This release focuses on making Log Analyzer easier to use and more consistent for everyday log inspection.
 
-### Changed
-- Restructured project to standard Python package layout
-- Moved test files to tests/ directory
-- Enhanced console output to properly display Turkish characters
-- Used shared parsing function in table formatter and advanced analysis
+### Highlights
+- 🇹🇷 Turkish and 🇬🇧 English CLI interface.
+- `--language tr|en` and `--lang` support.
+- Bilingual dashboard and timeline output.
+- Safer HTML output escaping.
+- Cleaner terminal output and documentation.
+- Timeline input validation.
+- Removal of unfinished dashboard placeholders.
+- Improved analyzer log cleanup behavior.
 
-## v0.1.0 (Initial)
-### Added
-- Basic log analysis for CSV, JSON, and plain text files
-- ERROR/WARNING counting and message listing
-- Recursive directory scanning
-- GUI folder selection (tkinter)
-- Log file output with timestamp
-- Command line interface with help and version information
+### Usage
+
+```text
+log-analyzer C:\Logs\MyApp
+log-analyzer C:\Logs\MyApp --advanced
+log-analyzer C:\Logs\MyApp --language en
+log-analyzer C:\Logs\MyApp --lang tr --format html
+```
+
+### Notes
+
+The analyzer remains dependency-free at runtime and uses the Python standard library. Advanced analysis is statistical and pattern-based; it does not use AI or machine learning.
+
+## v1.1.0 - 2026-08-26
+
+- Added advanced analysis, table output, modular handlers, shared parsing, UTF-8 support, and tests.
+- Fixed CSV header detection, JSONL processing, and package import issues.
+
+## v1.0.0 - 2026-08-24
+
+- Initial release with CSV, JSON, JSONL, TXT and LOG analysis.
+- Added recursive scanning, ERROR/WARNING detection, GUI folder selection, and CLI support.
