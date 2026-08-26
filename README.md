@@ -21,6 +21,7 @@ A Python package that analyzes log files (.log, .txt, .json, .jsonl, .csv) to co
   - Anomaly detection (statistical outlier detection in log volumes)
   - Correlation analysis (WARNING→ERROR within time windows)
   - Summary statistics (percentages, time span, message length, etc.)
+  *_Note: These analyses use basic statistical and pattern-matching techniques; they do not include AI/semantic understanding or machine learning._*
 - **Table format output** (with `--format table`):
   - SQL-like table display: TIMESTAMP | LEVEL | MESSAGE | FILE:LINE
   - Proper column alignment and truncation for readability

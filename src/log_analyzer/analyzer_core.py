@@ -67,7 +67,8 @@ def detect_errors_warnings(lines):
     """
     result = []
     for line_num, message in lines:
-        if contains_error_warning(message):
+        timestamp, level, _ = parse_log_message(message)
+        if level in ['ERROR', 'WARNING']:
             result.append((line_num, message))
     return result
 
@@ -254,46 +255,85 @@ def parse_log_message(message: str) -> tuple:
     level = "Unknown"
     msg_content = message
 
-    # Check if message already has level: message format (contains ': ')
-    if ': ' in message and message.count(': ') >= 1:
-        parts = message.split(': ', 1)
-        potential_level = parts[0].strip()
-        if potential_level in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
-            level = potential_level
-            msg_content = parts[1].strip()
-            # Try to extract timestamp from beginning
-            if ' ' in msg_content and len(msg_content.split(' ')[0]) == 10:  # YYYY-MM-DD format
-                date_part = msg_content.split(' ')[0]
-                time_part = msg_content.split(' ')[1] if len(msg_content.split(' ')) > 1 else ""
-                if re.match(r'\d{4}-\d{2}-\d{2}', date_part) and re.match(r'\d{2}:\d{2}:\d{2}', time_part):
-                    timestamp = f"{date_part} {time_part}"
-                    msg_content = ' '.join(msg_content.split(' ')[2:]) if len(msg_content.split(' ')) > 2 else ""
-        else:
-            # Try to find timestamp at start for messages with ': ' but non-standard level
-            timestamp_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', message)
-            if timestamp_match:
-                timestamp = timestamp_match.group(1)
-                remaining = message[timestamp_match.end():].strip()
-                if remaining.startswith('ERROR ') or remaining.startswith('WARNING ') or remaining.startswith('INFO ') or remaining.startswith('DEBUG '):
-                    level_part, msg_part = remaining.split(' ', 1)
-                    level = level_part
-                    msg_content = msg_part
-                else:
-                    msg_content = remaining
+    # Try multiple common log formats in order of preference:
 
-    # Try to find timestamp at start for messages without ': ' (standard format: "TIMESTAMP LEVEL message")
-    timestamp_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})', message)
+    # 1. Standard format: TIMESTAMP LEVEL message (e.g., "2024-01-15 10:30:00 ERROR Message")
+    timestamp_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(ERROR|WARNING|INFO|DEBUG)\s+(.*)', message)
     if timestamp_match:
-        timestamp = timestamp_match.group(1)
-        remaining = message[timestamp_match.end():].strip()
-        if remaining.startswith('ERROR ') or remaining.startswith('WARNING ') or remaining.startswith('INFO ') or remaining.startswith('DEBUG '):
-            level_part, msg_part = remaining.split(' ', 1)
-            level = level_part
-            msg_content = msg_part
-        else:
-            msg_content = remaining
+        timestamp, level, msg_content = timestamp_match.groups()
+        return timestamp, level, msg_content.strip()
 
-    return timestamp, level, msg_content
+    # 2. Colon-separated level format: LEVEL: message (possibly with timestamp after level)
+    colon_match = re.match(r'(ERROR|WARNING|INFO|DEBUG):\s*(.*)', message)
+    if colon_match:
+        level, rest = colon_match.groups()
+        # Try to extract timestamp from the beginning of rest
+        ts_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(.*)', rest)
+        if ts_match:
+            timestamp, msg_content = ts_match.groups()
+        else:
+            msg_content = rest
+        return timestamp, level, msg_content.strip()
+
+    # 3. Bracket format: [LEVEL] message (possibly with timestamp before or after)
+    bracket_match = re.match(r'\[(ERROR|WARNING|INFO|DEBUG)\]\s*(.*)', message)
+    if bracket_match:
+        level, rest = bracket_match.groups()
+        # Check if there's a timestamp at the start
+        ts_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(.*)', rest)
+        if ts_match:
+            timestamp, msg_content = ts_match.groups()
+        else:
+            msg_content = rest
+        return timestamp, level, msg_content.strip()
+
+    # 4. Key-value format: level=ERROR or similar
+    kv_match = re.search(r'[ _-]level[ _-]*=[ _-]*(ERROR|WARNING|INFO|DEBUG)[ _-]', message, re.IGNORECASE)
+    if kv_match:
+        level = kv_match.group(1).upper()
+        # Try to extract timestamp from beginning of message
+        ts_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(.*)', message)
+        if ts_match:
+            timestamp, rest = ts_match.groups()
+            # Remove the level=value part from rest for cleaner message
+            msg_content = re.sub(r'[ _-]level[ _-]*=[ _-]*(ERROR|WARNING|INFO|DEBUG)[ _-]', ' ', rest, flags=re.IGNORECASE).strip()
+        else:
+            # No timestamp, just clean the message
+            msg_content = re.sub(r'[ _-]level[ _-]*=[ _-]*(ERROR|WARNING|INFO|DEBUG)[ _-]', ' ', message, flags=re.IGNORECASE).strip()
+        return timestamp, level, msg_content
+
+    # 5. Fallback: Check if message contains level keywords (original method, but more careful)
+    # Only use this if we haven't found a structured format yet
+    upper_msg = message.upper()
+    if 'ERROR' in upper_msg:
+        level = 'ERROR'
+    elif 'WARNING' in upper_msg:
+        level = 'WARNING'
+    elif 'INFO' in upper_msg:
+        level = 'INFO'
+    elif 'DEBUG' in upper_msg:
+        level = 'DEBUG'
+
+    # Try to extract timestamp from beginning for fallback case
+    ts_match = re.match(r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(.*)', message)
+    if ts_match:
+        timestamp, msg_content = ts_match.groups()
+        # If we found a level via keyword search, make sure it's not overridden by timestamp area
+        if level == "Unknown":
+            # Try to find level in the message content
+            if 'ERROR' in upper_msg:
+                level = 'ERROR'
+            elif 'WARNING' in upper_msg:
+                level = 'WARNING'
+            elif 'INFO' in upper_msg:
+                level = 'INFO'
+            elif 'DEBUG' in upper_msg:
+                level = 'DEBUG'
+        else:
+            # Level was found via keyword search, use the rest as message content
+            msg_content = message[timestamp_match.end():].strip()
+
+    return timestamp, level, msg_content.strip()
 
 
 def cleanup_old_logs(keep_count=5):

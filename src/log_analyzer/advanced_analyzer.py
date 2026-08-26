@@ -184,8 +184,8 @@ def analyze_correlations(messages: List[Tuple[int, str, str]]) -> Dict[str, Any]
     # For each warning, see if there's an error within 5 minutes
     for warning_time in warning_times:
         for error_time in error_times:
-            time_diff = abs((error_time - warning_time).total_seconds())
-            if time_diff <= 300:  # 5 minutes
+            time_diff = (error_time - warning_time).total_seconds()
+            if 0 < time_diff <= 300:  # ERROR after WARNING, within 5 minutes
                 correlations.append({
                     'warning_time': warning_time.strftime('%Y-%m-%d %H:%M:%S'),
                     'error_time': error_time.strftime('%Y-%m-%d %H:%M:%S'),
