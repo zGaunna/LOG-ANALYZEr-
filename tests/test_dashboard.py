@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def test_dashboard_empty_results():
     from src.log_analyzer.dashboard import generate_dashboard
     results = {

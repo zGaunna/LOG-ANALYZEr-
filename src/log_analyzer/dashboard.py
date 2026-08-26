@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def generate_dashboard(results: dict) -> str:
     """Generate a terminal-based dashboard with KPIs."""
     lines = []
