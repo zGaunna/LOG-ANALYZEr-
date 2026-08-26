@@ -32,6 +32,17 @@ Use `--advanced` for extra analysis:
 
 These are basic statistical and pattern-matching features. There is no AI or machine-learning model involved.
 
+## Language support
+
+The command-line interface supports Turkish and English:
+
+```bash
+log-analyzer C:\Logs\MyApp --language tr
+log-analyzer C:\Logs\MyApp --language en
+```
+
+`--lang` is also accepted as a short alias.
+
 ## Installation
 
 ```bash
@@ -57,6 +68,8 @@ Without a directory, the program can open a folder picker when Tkinter is availa
 ```text
 --advanced
 --format {default,table,json,jsonl,html}
+--language {tr,en}
+--lang {tr,en}
 --version
 ```
 
@@ -68,7 +81,7 @@ log-analyzer C:\Logs\MyApp --advanced
 log-analyzer C:\Logs\MyApp --format table
 log-analyzer C:\Logs\MyApp --format json
 log-analyzer C:\Logs\MyApp --format html
-log-analyzer C:\Logs\MyApp --advanced --format table
+log-analyzer C:\Logs\MyApp --advanced --format table --language en
 ```
 
 ## Supported files
@@ -92,6 +105,7 @@ src/log_analyzer/
 ├── output_formatter.py
 ├── dashboard.py
 ├── timeline.py
+├── i18n.py
 └── __main__.py
 ```
 
